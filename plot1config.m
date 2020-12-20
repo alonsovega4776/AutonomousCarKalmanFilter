@@ -27,8 +27,11 @@ R_phi   = [cos(phi) -sin(phi) 0; ...
              0          0     1];
 
 %% Plot Trajectory
+subplot(1,4,1)
+set(gcf,'Position',[0 1000 2000 500])
 plot(car.trajectory(1:k,1), car.trajectory(1:k,2), 'LineWidth',2.5);
 hold on
+plot(car.referenceTrajectory(:,1), car.referenceTrajectory(:,2), '--r', 'LineWidth',1.0);
 
 %% Vars 
 x_vect_mid = [x;
@@ -142,10 +145,55 @@ plot(COM_tireL(1), COM_tireL(2),'o','Markersize',2,'Markerface','g')
 t = title(car.timeSpace(k));
 t.FontSize = 15.0;
 
-windowX = 1.5;
-windowY = 1.5;
+windowX = 2.5;
+windowY = 2.5;
 xlim([x-windowX, x+windowX]);
 ylim([y-windowY, y+windowY]);
+grid on
+hold off
+
+
+
+%% Plot Estimates 
+qTilda    = car.trajectory(1:k,:);
+qTildaHat = car.filteredTrajectory(1:k,:);
+yTilda    = car.measurements(1:k,:);
+
+t = car.timeSpace(1:k);
+
+subplot(1,4,2)
+plot(t, qTilda(:,1), 'LineWidth', 2.5, 'Color', [0,0,0]);
+hold on
+scatter(t, yTilda(:,1), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t, qTildaHat(:,1), 'LineWidth', 0.5, 'Color', [1,0,0]);
+titulo = title('x(t)');
+titulo.FontSize = 15.0;
+xlabel('t [s]', 'FontSize',13)
+ylabel('[m]', 'FontSize',13)
+grid on
+hold off
+
+subplot(1,4,3)
+plot(t, qTilda(:,2), 'LineWidth', 2.5, 'Color', [0,0,0]);
+hold on
+scatter(t, yTilda(:,2), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t, qTildaHat(:,2), 'LineWidth', 0.5, 'Color', [1,0,0]);
+titulo = title('y(t)');
+titulo.FontSize = 15.0;
+xlabel('t [s]', 'FontSize',13)
+ylabel('[m]', 'FontSize',13)
+grid on
+hold off
+
+subplot(1,4,4)
+plot(t, qTilda(:,3), 'LineWidth', 2.5, 'Color', [0,0,0]);
+hold on
+scatter(t, yTilda(:,3), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t, qTildaHat(:,3), 'LineWidth', 0.5, 'Color', [1,0,0]);
+titulo = title('θ(t)');
+titulo.FontSize = 15.0;
+xlabel('t [s]', 'FontSize',13)
+ylabel('[°]', 'FontSize',13)
 grid on
 hold off
 end

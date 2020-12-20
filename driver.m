@@ -16,53 +16,100 @@ q_0     = [0; ...
            0; ...
            deg2rad(30)];
 
-car = Robot(q_0, t_1, t_2, delta_t);
-%% Get Control
-t = car.timeSpace;
+car        = Robot(q_0, t_1, t_2, delta_t);
+t          = car.timeSpace;
+closedLoop = true;
 
-uTilda   = openLoop_control(t);
-phiTilda = uTilda(:,2);
-vTilda   = uTilda(:,1);
+%% Controller 
+if ~closedLoop
+    % Open-Loop Controller 
+    uTilda   = openLoop_control(t);
+    phiTilda = uTilda(:,2);
+    vTilda   = uTilda(:,1);
 
-%% Set Control 
-car = car.set_control(uTilda);
+    car = car.set_control(uTilda);
+else
+    % Feedback Controller 
+    r_ref = pos_trajectoryGen(t,0.5,0.5,2.0); 
+    car   = car.set_reference(r_ref);
+end
 
-uTilda_actual = car.controlTrajectory;
+%% Get State Trajectory 
+car       = car.solve(closedLoop);
+
+%% Get States
+qTilda    = car.trajectory(1:end-1,:);
+qTildaHat = car.filteredTrajectory(1:end-1,:);
+yTilda    = car.measurements(1:end-1,:);
+
+% Get Control 
+uTilda_actual   = car.controlTrajectory(1:end-1,:);
 phiTilda_actual = uTilda_actual(:,2);
 vTilda_actual   = uTilda_actual(:,1);
 
-%% Get State Trajectory 
-car    = car.solve();
-qTilda = car.trajectory; 
-
-
 %% Plot State Trajectory wrt time
 figure
-subplot(3,1,1)
-plot(t, qTilda(:,1), 'LineWidth', 2.5, 'Color', [0,0,0]);
+subplot(3,2,1)
+plot(t(1:end-1), qTilda(:,1), 'LineWidth', 2.5, 'Color', [0,0,0]);
 hold on
-t_phi = title('x(t)');
-t_phi.FontSize = 15.0;
+scatter(t(1:end-1), yTilda(:,1), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t(1:end-1), qTildaHat(:,1), 'LineWidth', 0.5, 'Color', [1,0,0]);
+titulo = title('x(t)');
+titulo.FontSize = 15.0;
 xlabel('t [s]', 'FontSize',13)
 ylabel('[m]', 'FontSize',13)
 grid on
 hold off
 
-subplot(3,1,2)
-plot(t, qTilda(:,2), 'LineWidth', 2.5, 'Color', [0,0,0]);
+subplot(3,2,3)
+plot(t(1:end-1), qTilda(:,2), 'LineWidth', 2.5, 'Color', [0,0,0]);
 hold on
-t_phi = title('y(t)');
-t_phi.FontSize = 15.0;
+scatter(t(1:end-1), yTilda(:,2), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t(1:end-1), qTildaHat(:,2), 'LineWidth', 0.5, 'Color', [1,0,0]);
+titulo = title('y(t)');
+titulo.FontSize = 15.0;
 xlabel('t [s]', 'FontSize',13)
 ylabel('[m]', 'FontSize',13)
 grid on
 hold off
 
-subplot(3,1,3)
-plot(t, qTilda(:,3), 'LineWidth', 2.5, 'Color', [0,0,0]);
+subplot(3,2,5)
+plot(t(1:end-1), qTilda(:,3), 'LineWidth', 2.5, 'Color', [0,0,0]);
 hold on
-t_phi = title('θ(t)');
-t_phi.FontSize = 15.0;
+scatter(t(1:end-1), yTilda(:,3), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t(1:end-1), qTildaHat(:,3), 'LineWidth', 0.5, 'Color', [1,0,0]);
+titulo = title('θ(t)');
+titulo.FontSize = 15.0;
+xlabel('t [s]', 'FontSize',13)
+ylabel('[°]', 'FontSize',13)
+grid on
+hold off
+
+subplot(3,2,2)
+plot(t(1:end-1), qTilda(:,1) - qTildaHat(:,1), 'LineWidth', 0.5, 'Color', [1,0,0]);
+hold on
+titulo = title('e_x(t)');
+titulo.FontSize = 15.0;
+xlabel('t [s]', 'FontSize',13)
+ylabel('[m]', 'FontSize',13)
+grid on
+hold off
+
+subplot(3,2,4)
+plot(t(1:end-1), qTilda(:,2) - qTildaHat(:,2), 'LineWidth', 0.5, 'Color', [1,0,0]);
+hold on
+titulo = title('e_y(t)');
+titulo.FontSize = 15.0;
+xlabel('t [s]', 'FontSize',13)
+ylabel('[m]', 'FontSize',13)
+grid on
+hold off
+
+subplot(3,2,6)
+plot(t(1:end-1), qTilda(:,3) - qTildaHat(:,3), 'LineWidth', 0.5, 'Color', [1,0,0]);
+hold on
+titulo = title('e_θ(t)');
+titulo.FontSize = 15.0;
 xlabel('t [s]', 'FontSize',13)
 ylabel('[°]', 'FontSize',13)
 grid on
@@ -71,8 +118,10 @@ hold off
 %% Plot Positional Trajectory
 figure 
 plot(qTilda(:,1), qTilda(:,2), 'LineWidth', 2.5, 'Color', [0,0,0])
-t_phi = title('Car Trajectory');
-t_phi.FontSize = 15.0;
+hold on
+plot(car.referenceTrajectory(:,1), car.referenceTrajectory(:,2), '--r', 'LineWidth',1.0)
+titulo = title('Car Trajectory');
+titulo.FontSize = 15.0;
 xlabel('x [m]', 'FontSize',13)
 ylabel('y [m]', 'FontSize',13)
 grid on
@@ -81,30 +130,32 @@ grid on
 %% Plot Control
 figure
 subplot(2,1,1)
-plot(t, rad2deg(phiTilda), 'LineWidth', 2.5, 'Color', [0,0,0]);
+plot(t(1:end-1), rad2deg(phiTilda_actual), 'LineWidth', 1.75, 'Color', [1,0,0]);
 hold on
-plot(t, rad2deg(phiTilda_actual), 'LineWidth', 1.75, 'Color', [1,0,0]);
-t_phi = title('φ(t)  (steering angle)');
-t_phi.FontSize = 15.0;
+titulo = title('φ(t)  (steering angle)');
+titulo.FontSize = 15.0;
 xlabel('t [s]', 'FontSize',13)
 ylabel('[°]', 'FontSize',13)
 grid on
-legend('I/P Actuation', 'Actual')
+if ~closedLoop
+    plot(t(1:end-1), rad2deg(phiTilda), 'LineWidth', 2.5, 'Color', [0,0,0]);
+    legend('I/P Actuation', 'Actual')
+end
 hold off
 
 subplot(2,1,2)
-plot(t, vTilda, 'LineWidth', 2.5, 'Color', [0,0,0]);
+plot(t(1:end-1), vTilda_actual, 'LineWidth', 1.75, 'Color', [1,0,0]);
 hold on
-plot(t, vTilda_actual, 'LineWidth', 1.75, 'Color', [1,0,0]);
-t_phi = title('v(t)   (lateral speed)');
-t_phi.FontSize = 15.0;
+titulo = title('v(t)   (lateral speed)');
+titulo.FontSize = 15.0;
 xlabel('t [s]', 'FontSize',13)
 ylabel('[m/s]', 'FontSize',13)
 grid on
+if ~closedLoop
+    plot(t(1:end-1), vTilda, 'LineWidth', 2.5, 'Color', [0,0,0]);
+end 
 hold off 
 
-
-%% 
 
 
 %%
