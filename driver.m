@@ -10,7 +10,7 @@ clc
 close all
 %% Initialize 
 t_1     = 0;
-t_2     = 10.0;
+t_2     = 15.0;
 delta_t = 0.01;
 q_0     = [0; ...
            0; ...
@@ -30,7 +30,7 @@ if ~closedLoop
     car = car.set_control(uTilda);
 else
     % Feedback Controller 
-    r_ref = pos_trajectoryGen(t,0.5,0.5,2.0); 
+    r_ref = pos_trajectoryGen('l', t); 
     car   = car.set_reference(r_ref);
 end
 
@@ -74,10 +74,10 @@ grid on
 hold off
 
 subplot(3,2,5)
-plot(t(1:end-1), qTilda(:,3), 'LineWidth', 2.5, 'Color', [0,0,0]);
+plot(t(1:end-1), rad2deg(qTilda(:,3)), 'LineWidth', 2.5, 'Color', [0,0,0]);
 hold on
-scatter(t(1:end-1), yTilda(:,3), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
-plot(t(1:end-1), qTildaHat(:,3), 'LineWidth', 0.5, 'Color', [1,0,0]);
+scatter(t(1:end-1), rad2deg(yTilda(:,3)), 'MarkerEdgeColor', [0,1,0],'MarkerFaceColor', [0,1,0]);
+plot(t(1:end-1), rad2deg(qTildaHat(:,3)), 'LineWidth', 0.5, 'Color', [1,0,0]);
 titulo = title('θ(t)');
 titulo.FontSize = 15.0;
 xlabel('t [s]', 'FontSize',13)
@@ -106,7 +106,7 @@ grid on
 hold off
 
 subplot(3,2,6)
-plot(t(1:end-1), qTilda(:,3) - qTildaHat(:,3), 'LineWidth', 0.5, 'Color', [1,0,0]);
+plot(t(1:end-1), rad2deg(qTilda(:,3) - qTildaHat(:,3)), 'LineWidth', 0.5, 'Color', [1,0,0]);
 hold on
 titulo = title('e_θ(t)');
 titulo.FontSize = 15.0;

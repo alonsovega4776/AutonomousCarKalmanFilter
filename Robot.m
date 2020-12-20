@@ -41,19 +41,19 @@ classdef Robot
         track        = 0.25; 
         
         % Controller Gains
-        gainK_PI = [0.35 ;...
-                    0.15]
-        gainK_P  = 0.5
+        gainK_PI = [1.00 ;...
+                    0.25]
+        gainK_P  = 1.00
         
         % Limits
-        uMAX = [      2.0  ;...
+        uMAX = [      2.5  ;...
                 deg2rad(20)]
-        uMIN = -[     2.0  ;...
+        uMIN = -[     2.5  ;...
                  deg2rad(20)]
         
         % Statistics      
-        measurementUncertainty = diag([40.4, 45.4, deg2rad(150.0)]);
-        modelUncertainty       = diag([0.2, 0.1, 0.03]);
+        measurementUncertainty = diag([5.0, 5.0, deg2rad(40.0)]);
+        modelUncertainty       = diag([0.72, 1.515, 0.9]);
         
         % Enable Filter
         kalman_EN = true;
@@ -274,14 +274,15 @@ classdef Robot
             v_k   = u_k(1);
             phi_k = u_k(2);
             
-            model_error_1 = 0.00;
-            model_error_2 = 1.00;
+            model_error_1 = 0.01;
+            model_error_2 = 0.85;
+            model_error_3 = -deg2rad(10);
             
             L       = obj.wheelBase + model_error_1;
             delta_t = obj.timeResolution;
             
             %% Update
-            S_k      = [cos(theta_k) sin(theta_k) tan(phi_k)/L ;...
+            S_k      = [cos(theta_k) sin(theta_k+model_error_3) tan(phi_k)/L ;...
                              zeros(1,3)                   ];
             q_kPlus1 = model_error_2*q_k + delta_t*S_k'*u_k;
             
